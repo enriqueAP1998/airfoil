@@ -66,7 +66,12 @@ class PanelMethod:
     def __init__(self, naca_code, alpha_deg, n_panels=120):
         self.naca = str(naca_code)
         self.alpha_deg = alpha_deg
-        self.alpha_rad = np.radians(alpha_deg)
+        
+        # MODIFIED: Inverted the angle here. 
+        # Previously, positive alpha rotated the geometry CCW (Tail Up = Nose Down).
+        # We now negate it so positive alpha rotates CW (Tail Down = Nose Up).
+        self.alpha_rad = np.radians(-alpha_deg) 
+        
         self.n_panels = n_panels
         
         # Generate airfoil geometry
@@ -425,22 +430,22 @@ def main():
     
     # NACA code input
     naca_digit1 = st.sidebar.slider("Maximum Camber (%)", 0, 9, 4, 
-                                     help="First digit: Maximum camber as percentage of chord")
+                                    help="First digit: Maximum camber as percentage of chord")
     naca_digit2 = st.sidebar.slider("Camber Position (×10%)", 0, 9, 4,
-                                     help="Second digit: Position of maximum camber (×10% from leading edge)")
+                                    help="Second digit: Position of maximum camber (×10% from leading edge)")
     naca_thickness = st.sidebar.slider("Thickness (%)", 6, 24, 12,
-                                        help="Last two digits: Maximum thickness as percentage of chord")
+                                     help="Last two digits: Maximum thickness as percentage of chord")
     
     naca_code = f"{naca_digit1}{naca_digit2}{naca_thickness:02d}"
     st.sidebar.info(f"**NACA {naca_code}**")
     
     # Angle of attack
     alpha_deg = st.sidebar.slider("Angle of Attack (α)", -10.0, 20.0, 8.0, 0.5,
-                                   help="Angle between airfoil and incoming airflow")
+                                  help="Angle between airfoil and incoming airflow")
     
     # Panel count
     n_panels = st.sidebar.slider("Number of Panels", 60, 200, 120, 10,
-                                  help="More panels = more accurate (but slower)")
+                                 help="More panels = more accurate (but slower)")
     
     st.sidebar.subheader("Visualization Options")
     show_cp = st.sidebar.checkbox("Pressure Coefficient", True)
