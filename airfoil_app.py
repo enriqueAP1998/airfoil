@@ -262,25 +262,38 @@ class PanelMethod:
     
     def compute_coefficients(self):
         """Compute lift and drag coefficients"""
-        # Lift coefficient from Kutta-Joukowski theorem
-        # CL = 2 * gamma (for unit chord and unit freestream velocity)
-        CL = 2 * self.gamma
+        # We compute forces by integrating Pressure Coefficient (Cp) over the surface.
+        # Since the geometry is rotated to the angle of attack and flow is horizontal:
+        # - Lift is the force component in Y direction
+        # - Drag is the force component in X direction
         
-        # For inviscid flow, pressure drag is zero (d'Alembert's paradox)
-        # We estimate friction drag using a flat plate correlation
-        # Cd_friction ≈ 1.328 / sqrt(Re) for laminar flow
-        # Using Re ~ 1e6 as typical value
+        CN = 0.0  # Normal force coefficient (Projected on Y)
+        CA = 0.0  # Axial force coefficient (Projected on X)
+        
+        for i in range(len(self.xc)):
+            # Normal vector components n = (nx, ny)
+            nx = np.cos(self.beta[i])
+            ny = np.sin(self.beta[i])
+            
+            # Force contribution: dF = -Cp * S * n
+            # We assume unit chord c=1, so we sum directly.
+            CA += -self.Cp_surface[i] * self.S[i] * nx
+            CN += -self.Cp_surface[i] * self.S[i] * ny
+            
+        # Lift is the vertical force
+        CL = CN
+        
+        # Inviscid pressure drag should be zero (d'Alembert's paradox).
+        # Any non-zero value here is numerical error (induced drag).
+        Cd_pressure = CA
+        
+        # Estimate friction drag using a flat plate correlation (Blasius)
+        # This adds a realistic viscous component for education.
         Re = 1e6
         Cd_friction = 1.328 / np.sqrt(Re)
         
-        # Add small induced drag component from pressure integration
-        # Integrate Cp * n_x over the surface (pressure drag)
-        Cd_pressure = 0.0
-        for i in range(len(self.xc)):
-            nx = np.cos(self.beta[i])  # Normal vector x-component
-            Cd_pressure += self.Cp_surface[i] * self.S[i] * nx
-        
-        Cd = Cd_friction * 2 + abs(Cd_pressure)  # Factor of 2 for both surfaces
+        # Total Drag = Friction (top+bottom) + Numerical Pressure Drag
+        Cd = (Cd_friction * 2) + abs(Cd_pressure)
         
         return CL, Cd
     
